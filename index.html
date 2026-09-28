@@ -91,6 +91,7 @@
   .softbox p + p { margin-top: 4px; }
 
   .exbar { margin: 14px -16px -14px; padding: 12px 16px; border-top: 1px solid var(--line); background: #f8fafc; }
+  .exbar + .exbar { margin-top: 0; }
   .exhead { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; text-align: left; }
   .exhead .lead { display: flex; align-items: center; gap: 8px; min-width: 0; }
   .exhead .t { font-size: 15px; font-weight: 600; color: var(--ink-2); }
@@ -103,6 +104,20 @@
   .exlist label:hover { background: #eef2f7; }
   .exlist input { margin: 2px 0 0; width: 15px; height: 15px; accent-color: var(--bad); flex-shrink: 0; }
   .exlist span { font-size: 13px; line-height: 1.35; color: var(--ink-3); }
+  .inbar { background: #f7fbfa; }
+  .inlist { margin-top: 10px; }
+  .inlist .auto { display: flex; align-items: flex-start; gap: 9px; padding: 5px 6px; margin: 0 -6px; }
+  .inlist .mark { flex-shrink: 0; width: 15px; text-align: center; font-size: 13px; font-weight: 700; line-height: 1.35; }
+  .inlist .mark.yes { color: #047857; }
+  .inlist .mark.warn { color: var(--warn); }
+  .inlist .mark.na { color: var(--muted-2); }
+  .inlist .auto span.txt { font-size: 13px; line-height: 1.35; color: var(--ink-3); }
+  .inlist .auto.pending span.txt { color: var(--muted); }
+  .inlist label { display: flex; align-items: flex-start; gap: 9px; padding: 5px 6px; margin: 0 -6px; border-radius: 4px; cursor: pointer; }
+  .inlist label:hover { background: #eef5f3; }
+  .inlist input { margin: 2px 0 0; width: 15px; height: 15px; accent-color: #047857; flex-shrink: 0; }
+  .inlist span.txt { font-size: 13px; line-height: 1.35; color: var(--ink-3); }
+  .inlist .sep { font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--muted-2); margin: 10px 0 2px; }
   .cleared { font-size: 13px; color: #047857; margin: 10px 0 0; font-weight: 500; }
 
   .ruled { padding: 14px 20px; background: #f8fafc; border-top: 1px solid var(--line-soft); }
@@ -180,6 +195,7 @@
     .nudge { margin: 0 16px 14px; }
     .tbody { padding: 14px; }
     .exbar { margin: 14px -14px -14px; padding: 12px 14px; }
+    .exbar + .exbar { margin-top: 0; }
     .ruled, .post { padding-left: 16px; padding-right: 16px; }
     .trial-btn { padding: 14px 16px; }
     .detail { padding: 4px 16px 16px; }
@@ -188,10 +204,10 @@
   /* ---------------- touch ---------------- */
   @media (hover: none) {
     .choice { padding: 13px 10px; }
-    .exlist label { padding: 10px 6px; }
-    .exlist input { width: 18px; height: 18px; margin-top: 1px; }
+    .exlist label, .inlist label, .inlist .auto { padding: 10px 6px; }
+    .exlist input, .inlist input { width: 18px; height: 18px; margin-top: 1px; }
     .trial-btn { padding-top: 16px; padding-bottom: 16px; }
-    .choice:hover, .exlist label:hover, .trial-btn:hover { background: inherit; border-color: #cbd5e1; }
+    .choice:hover, .exlist label:hover, .inlist label:hover, .trial-btn:hover { background: inherit; border-color: #cbd5e1; }
     .choice[aria-pressed="true"]:hover { background: var(--ink); border-color: var(--ink); }
   }
 </style>
@@ -252,7 +268,7 @@
         run under different versions — reconcile every line against your IRB-approved protocol before using this on a
         real screen. This narrows the list; it doesn't replace the eligibility checklist or the PI's call.
       </p>
-      <p class="ver">Version 1.3 · September 2026</p>
+      <p class="ver">Version 1.4 · September 2026</p>
     </section>
 
   </div>
@@ -491,9 +507,53 @@ function screenTrial(t, p) {
   return { status, hard, soft };
 }
 
+/* ----------------------------------------------------------------------------
+   Inclusion criteria, per trial. The numeric ones the tool already checked from
+   step 1 are shown with their verdict; the rest are tick-boxes for the
+   coordinator to confirm. Confirming is for redundancy — it never rules a trial
+   in or out on its own.
+   -------------------------------------------------------------------------- */
+
+function inclusionItems(t, p) {
+  const auto = [];
+  const mark = (ok, text) => auto.push({ ok, text });   // ok: true | false | null
+
+  mark(t.sites.includes(p.site) ? true : false,
+       p.site ? SITE_LABEL[p.site] + (t.sites.includes(p.site) ? " is a target vessel" : " is not a target vessel")
+              : "Occlusion site not entered");
+
+  if (p.hours === "") mark(null, "Time from last known well not entered");
+  else mark(Number(p.hours) <= t.window[1],
+            p.hours + " h " + (Number(p.hours) <= t.window[1] ? "is inside" : "is past") + " the 0–" + t.window[1] + " h window");
+
+  if (p.nihss === "") mark(null, "NIHSS not entered");
+  else {
+    const n = Number(p.nihss);
+    const lo = t.nihss[0], hi = t.nihss[1];
+    const ok = (lo === null || n >= lo) && (hi === null || n <= hi);
+    mark(ok, "NIHSS " + n + (ok ? " is inside " : " is outside ") + (hi ? lo + "–" + hi : "≥" + lo));
+  }
+
+  if (p.age === "") mark(null, "Age not entered");
+  else {
+    const a = Number(p.age);
+    const ok = (t.age[0] === null || a >= t.age[0]) && (t.age[1] === null || a <= t.age[1]);
+    mark(ok, "Age " + a + (ok ? " is inside " : " is outside ") + (t.age[1] ? t.age[0] + "–" + t.age[1] : "≥" + t.age[0]));
+  }
+
+  if (p.mrs === "") mark(null, "Pre-stroke mRS not entered");
+  else {
+    const m = Number(p.mrs);
+    const ok = m >= t.mrs[0] && m <= t.mrs[1];
+    mark(ok, "Pre-stroke mRS " + m + (ok ? " is inside " : " is outside ") + t.mrs[0] + "–" + t.mrs[1]);
+  }
+
+  return { auto, manual: t.core };
+}
+
 /* ========================================================================== */
 
-const state = { site:"", hours:"", nihss:"", age:"", mrs:"", flags:{}, open:null, openEx:{} };
+const state = { site:"", hours:"", nihss:"", age:"", mrs:"", flags:{}, incl:{}, open:null, openEx:{}, openIn:{} };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 const $ = id => document.getElementById(id);
 
@@ -512,7 +572,7 @@ $("mrs").addEventListener("click", e => {
 });
 ["hours","nihss","age"].forEach(k => $(k).addEventListener("input", e => { state[k] = e.target.value; render(); }));
 $("reset").addEventListener("click", () => {
-  Object.assign(state, { site:"", hours:"", nihss:"", age:"", mrs:"", flags:{}, open:null, openEx:{} });
+  Object.assign(state, { site:"", hours:"", nihss:"", age:"", mrs:"", flags:{}, incl:{}, open:null, openEx:{}, openIn:{} });
   ["hours","nihss","age"].forEach(k => $(k).value = "");
   syncControls(); render();
 });
@@ -572,15 +632,41 @@ function render() {
         ).join("")}</div>`
       : "";
 
+    /* inclusion band */
+    const inc = inclusionItems(t, state);
+    const inOpen = !!state.openIn[t.id];
+    const confirmed = inc.manual.filter((_, k) => state.incl[t.id + "|" + k]).length;
+    const autoOk = inc.auto.filter(a => a.ok === true).length;
+    const incTotal = inc.auto.length + inc.manual.length;
+    const incDone = autoOk + confirmed;
+
+    const incList = inOpen ? `<div class="inlist">
+        <p class="sep">FROM STEP 1</p>
+        ${inc.auto.map(a => `<div class="auto${a.ok === null ? " pending" : ""}">
+          <span class="mark ${a.ok === true ? "yes" : a.ok === false ? "warn" : "na"}">${a.ok === true ? "✓" : a.ok === false ? "!" : "–"}</span>
+          <span class="txt">${esc(a.text)}</span></div>`).join("")}
+        <p class="sep">CONFIRM YOURSELF</p>
+        ${inc.manual.map((x, k) =>
+          `<label><input type="checkbox" data-incl="${t.id}|${k}"${state.incl[t.id + "|" + k] ? " checked" : ""}><span class="txt">${esc(x)}</span></label>`
+        ).join("")}
+      </div>` : "";
+
     return `<div class="tblock"><div class="tbar" style="background:${tone.bar}"></div>
       <div class="tbody">
         <span class="chip" style="background:${tone.bar};color:${tone.chipInk}">${t.name}</span>
         ${i===0 && live.length>1 ? `<span class="tag">closest fit</span>` : ``}
         <p class="why">${esc(r.why)}</p>
         ${soft}
+        <div class="exbar inbar">
+          <button class="exhead" data-in="${t.id}" aria-expanded="${inOpen}">
+            <span class="lead"><span class="n">3</span><span class="t">Inclusion criteria</span></span>
+            <span class="right"><span class="s">${incDone} of ${incTotal} met</span><span class="chev"></span></span>
+          </button>
+          ${incList}
+        </div>
         <div class="exbar">
           <button class="exhead" data-ex="${t.id}" aria-expanded="${open}">
-            <span class="lead"><span class="n">3</span><span class="t">Exclusions</span></span>
+            <span class="lead"><span class="n">4</span><span class="t">Exclusions</span></span>
             <span class="right"><span class="s">${n} to check</span><span class="chev"></span></span>
           </button>
           ${list}
@@ -677,8 +763,14 @@ function render() {
   $("consider").querySelectorAll("[data-ex]").forEach(b => b.addEventListener("click", () => {
     state.openEx[b.dataset.ex] = !state.openEx[b.dataset.ex]; render();
   }));
+  $("consider").querySelectorAll("[data-in]").forEach(b => b.addEventListener("click", () => {
+    state.openIn[b.dataset.in] = !state.openIn[b.dataset.in]; render();
+  }));
   $("consider").querySelectorAll("[data-flag]").forEach(cb => cb.addEventListener("change", () => {
     state.flags[cb.dataset.flag] = cb.checked; render();
+  }));
+  $("consider").querySelectorAll("[data-incl]").forEach(cb => cb.addEventListener("change", () => {
+    state.incl[cb.dataset.incl] = cb.checked; render();
   }));
   $("postPanel").querySelectorAll("[data-ex]").forEach(b => b.addEventListener("click", () => {
     state.openEx[b.dataset.ex] = !state.openEx[b.dataset.ex]; render();
