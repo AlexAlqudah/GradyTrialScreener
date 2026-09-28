@@ -220,11 +220,6 @@
         <div class="num-row"><input type="number" id="hours" min="0" step="0.5" placeholder="0.0" inputmode="decimal"><span class="suffix">h</span></div>
       </div>
 
-      <div class="field" id="arrivalField" hidden>
-        <div class="field-head"><label>How did they arrive?</label><span class="hint">splits DUSK from STEP-B under 4.5 h</span></div>
-        <div class="choices" id="arrival" style="grid-template-columns: repeat(2, minmax(0,1fr));"></div>
-      </div>
-
       <div class="field">
         <div class="field-head"><label for="nihss">NIHSS</label></div>
         <div class="num-row"><input type="number" id="nihss" min="0" max="42" step="1" placeholder="0"></div>
@@ -257,7 +252,7 @@
         run under different versions — reconcile every line against your IRB-approved protocol before using this on a
         real screen. This narrows the list; it doesn't replace the eligibility checklist or the PI's call.
       </p>
-      <p class="ver">Version 1.2 · September 2026</p>
+      <p class="ver">Version 1.3 · September 2026</p>
     </section>
 
   </div>
@@ -324,20 +319,6 @@ const TRIALS = {
     excl: ["ich","aspects","multiterritory","priorstroke","inr","stent"],
     notes: "Window set to 24 h per your site. The public registry record lists 16 h — confirm the amendment your site is running under. Age floor is 22, not 18: the only trial here that excludes 18–21."
   },
-  DUSK: {
-    id: "DUSK", name: "DUSK",
-    full: "Combined Thrombectomy for Distal Medium Vessel Occlusion Stroke",
-    nct: "NCT05983757", tone: "amber",
-    sites: ["M2_ND","M3","ACA","PCA"], window: [0,12], nihss: [6,null], age: [18,null], mrs: [0,2],
-    core: [
-      "No proximal occlusion — patient is not an EVT candidate under guideline care",
-      "Ineligible for, or failed, IV thrombolysis",
-      "Target vessel diameter 1.5–2.5 mm",
-      "NIHSS >5 at randomization"
-    ],
-    excl: ["ich","improving","othertier","core50","contrast","terminal"],
-    notes: "Randomization strata run 0–4.5, 4.5–8 and 9–12 h from time last known well."
-  },
   TESTED: {
     id: "TESTED", name: "TESTED",
     full: "Treatment with Endovascular intervention for STroke patients with Existing Disability",
@@ -386,7 +367,6 @@ const SOURCES = {
   ],
   RP_PIVOTAL:  [{ label: "Registry record", url: "https://clinicaltrials.gov/study/NCT06029491" }],
   ATHENA:      [{ label: "Registry record", url: "https://clinicaltrials.gov/study/NCT06370182" }],
-  DUSK:        [{ label: "Registry record", url: "https://clinicaltrials.gov/study/NCT05983757" }],
   SUMMIT_RISE: [{ label: "Registry record", url: "https://clinicaltrials.gov/study/NCT07436156" }],
   TESTED:      [{ label: "Registry record", url: "https://clinicaltrials.gov/study/NCT05911568" }]
 };
@@ -397,8 +377,6 @@ const SITES = [
   { id: "M2_D",    label: "Dominant M2" },
   { id: "M2_ND",   label: "Non-dom / co-dom M2" },
   { id: "M3",      label: "M3" },
-  { id: "ACA",     label: "ACA" },
-  { id: "PCA",     label: "PCA" },
   { id: "VERT",    label: "Vertebral" },
   { id: "BASILAR", label: "Basilar" }
 ];
@@ -442,7 +420,7 @@ const TONE = {
    YOUR CENTER'S ROUTING
    ========================================================================== */
 
-function centerRoute({ site, hours: h, nihss: n, arrival, mrs }) {
+function centerRoute({ site, hours: h, nihss: n, mrs }) {
   const out = [];
   const push = (id, why) => out.push({ id, why });
   const m = mrs === "" ? null : Number(mrs);
@@ -465,13 +443,9 @@ function centerRoute({ site, hours: h, nihss: n, arrival, mrs }) {
   if (site === "M2_D" && h < 24 && n >= 6 && n <= 25) {
     push("ATHENA", "Dominant M2 within 24 h with NIHSS 6–25");
   }
-  if (site === "M2_ND" || site === "M3") {
-    if (h < 4.5 && arrival === "transfer" && n >= 6) push("DUSK", "Distal MCA transfer arriving under 4.5 h with NIHSS ≥6");
-    if (h < 4.5 && arrival === "ed" && n >= 8) push("STEP_B", "Distal MCA direct to ED under 4.5 h with NIHSS ≥8");
-    if (h >= 4.5 && h < 12 && n >= 6) push("DUSK", "Distal MCA at 4.5–12 h with NIHSS ≥6");
-    if (h >= 12 && h < 24 && n >= 8) push("STEP_B", "Distal MCA at 12–24 h with NIHSS ≥8");
+  if ((site === "M2_ND" || site === "M3") && h < 24 && n >= 8) {
+    push("STEP_B", "Distal MCA within 24 h with NIHSS ≥8");
   }
-  if ((site === "ACA" || site === "PCA") && h < 12 && n >= 6) push("DUSK", "ACA/PCA under 12 h with NIHSS ≥6");
   if (site === "VERT" && h < 8 && n >= 6) push("RP_PIVOTAL", "Vertebral under 8 h with NIHSS ≥6");
   if (site === "BASILAR" && h < 8 && n >= 6) push("RP_PIVOTAL", "Basilar under 8 h with NIHSS ≥6");
 
@@ -519,22 +493,17 @@ function screenTrial(t, p) {
 
 /* ========================================================================== */
 
-const state = { site:"", hours:"", nihss:"", age:"", mrs:"", arrival:"ed", flags:{}, open:null, openEx:{} };
+const state = { site:"", hours:"", nihss:"", age:"", mrs:"", flags:{}, open:null, openEx:{} };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 const $ = id => document.getElementById(id);
 
 $("sites").innerHTML = SITES.map(s => `<button class="choice" data-site="${s.id}" aria-pressed="false">${esc(s.label)}</button>`).join("");
-$("arrival").innerHTML = [["ed","Direct to our ED"],["transfer","Transfer in"]].map(([id,l]) => `<button class="choice" data-arrival="${id}" aria-pressed="${id==="ed"}">${l}</button>`).join("");
 $("mrs").innerHTML = [0,1,2,3,4,5].map(n => `<button class="choice" data-mrs="${n}" aria-pressed="false" style="text-align:center;padding:10px 4px">${n}</button>`).join("");
 
 $("sites").addEventListener("click", e => {
   const b = e.target.closest("[data-site]"); if (!b) return;
   state.site = state.site === b.dataset.site ? "" : b.dataset.site;
   syncControls(); render();
-});
-$("arrival").addEventListener("click", e => {
-  const b = e.target.closest("[data-arrival]"); if (!b) return;
-  state.arrival = b.dataset.arrival; syncControls(); render();
 });
 $("mrs").addEventListener("click", e => {
   const b = e.target.closest("[data-mrs]"); if (!b) return;
@@ -543,16 +512,14 @@ $("mrs").addEventListener("click", e => {
 });
 ["hours","nihss","age"].forEach(k => $(k).addEventListener("input", e => { state[k] = e.target.value; render(); }));
 $("reset").addEventListener("click", () => {
-  Object.assign(state, { site:"", hours:"", nihss:"", age:"", mrs:"", arrival:"ed", flags:{}, open:null, openEx:{} });
+  Object.assign(state, { site:"", hours:"", nihss:"", age:"", mrs:"", flags:{}, open:null, openEx:{} });
   ["hours","nihss","age"].forEach(k => $(k).value = "");
   syncControls(); render();
 });
 
 function syncControls() {
   $("sites").querySelectorAll("[data-site]").forEach(b => b.setAttribute("aria-pressed", b.dataset.site === state.site));
-  $("arrival").querySelectorAll("[data-arrival]").forEach(b => b.setAttribute("aria-pressed", b.dataset.arrival === state.arrival));
   $("mrs").querySelectorAll("[data-mrs]").forEach(b => b.setAttribute("aria-pressed", b.dataset.mrs === state.mrs));
-  $("arrivalField").hidden = !(state.site === "M2_ND" || state.site === "M3");
 }
 
 /* ---- render ---- */
@@ -569,7 +536,7 @@ function render() {
     });
   const byId = Object.fromEntries(results.map(r => [r.trial.id, r]));
 
-  const raw = ready ? centerRoute({ site: state.site, hours: Number(state.hours), nihss: Number(state.nihss), arrival: state.arrival, mrs: state.mrs }) : [];
+  const raw = ready ? centerRoute({ site: state.site, hours: Number(state.hours), nihss: Number(state.nihss), mrs: state.mrs }) : [];
   const live    = raw.filter(r => byId[r.id].status !== "out");
   const blocked = raw.filter(r => byId[r.id].status === "out");
 
