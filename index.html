@@ -90,8 +90,9 @@
   .softbox p { font-size: 13px; color: var(--warn); margin: 0; line-height: 1.35; }
   .softbox p + p { margin-top: 4px; }
 
-  .exbar { margin: 14px -16px -14px; padding: 12px 16px; border-top: 1px solid var(--line); background: #f8fafc; }
-  .exbar + .exbar { margin-top: 0; }
+  .exbar { margin: 14px -16px 0; padding: 12px 16px; border-top: 1px solid var(--line); background: #f8fafc; }
+  .exbar + .exbar { margin-top: 10px; }
+  .exbar.exlast { margin-bottom: -14px; }
   .exhead { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; text-align: left; }
   .exhead .lead { display: flex; align-items: center; gap: 8px; min-width: 0; }
   .exhead .t { font-size: 15px; font-weight: 600; color: var(--ink-2); }
@@ -117,7 +118,7 @@
   .inlist label:hover { background: #eef5f3; }
   .inlist input { margin: 2px 0 0; width: 15px; height: 15px; accent-color: #047857; flex-shrink: 0; }
   .inlist span.txt { font-size: 13px; line-height: 1.35; color: var(--ink-3); }
-  .inlist .sep { font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--muted-2); margin: 10px 0 2px; }
+  .inlist .sep, .exlist .sep { font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--muted-2); margin: 12px 0 2px; }
   .cleared { font-size: 13px; color: #047857; margin: 10px 0 0; font-weight: 500; }
 
   .ruled { padding: 14px 20px; background: #f8fafc; border-top: 1px solid var(--line-soft); }
@@ -142,6 +143,12 @@
   .post ul { list-style: none; margin: 10px 0 0; padding: 0; }
   .post li { font-size: 13px; color: var(--ink-3); line-height: 1.35; display: flex; gap: 8px; margin-bottom: 5px; }
   .post li .b { color: var(--muted-2); flex-shrink: 0; }
+  .dtable { width: 100%; border-collapse: collapse; margin: 10px 0 4px; }
+  .dtable th, .dtable td { text-align: left; font-size: 12.5px; line-height: 1.3; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .dtable th { font-size: 11px; font-weight: 700; letter-spacing: .03em; color: var(--muted); border-bottom-color: #cbd5e1; }
+  .dtable td:first-child { font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+  .dtable td { color: var(--ink-3); }
+  @media (max-width: 560px) { .dtable th:nth-child(2), .dtable td:nth-child(2) { display: none; } }
 
   /* ---- Protocol screen ---- */
   .trial-row + .trial-row { border-top: 1px solid var(--line-soft); }
@@ -194,8 +201,9 @@
     .panel-body-msg { padding: 0 16px 16px; }
     .nudge { margin: 0 16px 14px; }
     .tbody { padding: 14px; }
-    .exbar { margin: 14px -14px -14px; padding: 12px 14px; }
-    .exbar + .exbar { margin-top: 0; }
+    .exbar { margin: 14px -14px 0; padding: 12px 14px; }
+    .exbar + .exbar { margin-top: 10px; }
+    .exbar.exlast { margin-bottom: -14px; }
     .ruled, .post { padding-left: 16px; padding-right: 16px; }
     .trial-btn { padding: 14px 16px; }
     .detail { padding: 4px 16px 16px; }
@@ -253,8 +261,8 @@
       </div>
 
       <p class="hint" style="margin:16px 0 0;line-height:1.5">
-        Age warns but never stops. mRS warns for the mRS 0–2 trials, but it's an inclusion for TESTED — enter it, or
-        TESTED won't surface.
+        Every field here is a hard stop. Age and pre-stroke mRS now rule a trial out rather than warn, so leave one
+        blank and the trials that depend on it stay on the list unresolved.
       </p>
     </section>
 
@@ -264,11 +272,11 @@
       <div class="card" id="screenPanel"></div>
       <div id="postPanel"></div>
       <p class="foot">
-        Criteria transcribed from registry records and site documents, September 2026. Protocols get amended and sites
-        run under different versions — reconcile every line against your IRB-approved protocol before using this on a
-        real screen. This narrows the list; it doesn't replace the eligibility checklist or the PI's call.
+        Inclusion and exclusion criteria transcribed from the signed site protocols; each trial's panel names the
+        version it came from. Protocols get amended — reconcile against the current IRB-approved version before using
+        this on a real screen. This narrows the list; it doesn't replace the eligibility checklist or the PI's call.
       </p>
-      <p class="ver">Version 1.4 · September 2026</p>
+      <p class="ver">Version 2.2 · October 2026</p>
     </section>
 
   </div>
@@ -281,75 +289,186 @@
    ========================================================================== */
 
 const TRIALS = {
-  STEP_A: {
-    id: "STEP_A", name: "STEP-A",
+  STEP_LVO: {
+    id: "STEP_LVO", name: "STEP-LVO",
     full: "StrokeNet Thrombectomy Endovascular Platform — Domain A, low-NIHSS LVO stratum",
     nct: "NCT06289985", tone: "red",
+    protocol: "Domain A Protocol V5.0 · 18 Sep 2025",
     sites: ["ICA","M1"], window: [0,24], nihss: [0,5], age: [18,null], mrs: [0,2],
     core: [
-      "Complete occlusion of intracranial ICA or M1 (some focal deficit attributable to it even if NIHSS 0)",
-      "Presentation within 24 h of last known well",
-      "Arterial puncture achievable within 2 h of qualifying CTA/MRA or CTP/MRP"
+      "Complete occlusion of the intracranial ICA or M1 MCA",
+      "Some focal neurologic deficit attributable to the target occlusion, if NIHSS is 0",
+      "Presentation to the enrolling hospital within 24 h of last known well",
+      "Arterial puncture achievable within 2 h of the qualifying CTA/MRA or CTP/MRP"
     ],
-    excl: ["ich","aspects","tandem","multiterritory","icad","seizure","pregnant","terminal","platelets","midline"],
-    notes: "Imaging only needs repeating if the NIHSS improves significantly before randomization."
+    excl: [
+      "Presumed septic embolus; suspicion of bacterial endocarditis",
+      "Seizure at stroke onset or between onset and enrollment",
+      "Known anaphylactic reaction to contrast material that precludes endovascular reperfusion therapy",
+      "Intracranial occlusion suspected to be chronic, on history and/or imaging",
+      "Intracranial dissection, on history and/or imaging",
+      "Cerebral vasculitis, on history and/or imaging",
+      "Known pregnancy",
+      "Known pre-existing medical, neurological or psychiatric disease that would confound the neurological or functional evaluations",
+      "Known serious, advanced or terminal illness, or life expectancy under 6 months in the investigator's judgment",
+      "Known or high suspicion of underlying intracranial atherosclerotic disease (ICAD)",
+      "Known platelet count <100,000/µL",
+      "CT ASPECTS <6 (MRI ASPECTS <7)",
+      "Unfavorable vascular anatomy limiting access to the occluded artery",
+      "Acute occlusions in multiple vascular territories (bilateral anterior, or anterior/posterior)",
+      "Tandem occlusions",
+      "Significant mass effect with midline shift (>5 mm)",
+      "Evidence of intracranial tumor (except small meningioma: ≤3 cm and asymptomatic)",
+      "Evidence of acute intracranial hemorrhage"
+    ],
+    notes: "Baseline imaging only needs repeating if the NIHSS improves significantly before randomization — the exception to the 120-minute rule that applies to the rest of the domain."
   },
-  STEP_B: {
-    id: "STEP_B", name: "STEP-B",
+
+  STEP_MEVO: {
+    id: "STEP_MEVO", name: "STEP-MeVO",
     full: "StrokeNet Thrombectomy Endovascular Platform — Domain A, medium/distal vessel stratum",
     nct: "NCT06289985", tone: "red",
-    sites: ["M2_ND","M3"], window: [0,24], nihss: [8,null], age: [18,null], mrs: [0,2],
+    protocol: "Domain A Protocol V5.0 · 18 Sep 2025",
+    sites: ["M2_ND","M3"], window: [0,24], nihss: [9,null], age: [18,null], mrs: [0,2],
     core: [
-      "Non-dominant / co-dominant M2 (serving ≤50% of MCA territory) or M3 — visualized occlusion or Tmax >4 s deficit",
-      "Presentation within 24 h of last known well",
-      "Puncture achievable within 2 h of qualifying imaging",
-      "If onset >6 h: core must be <50% of the territory supplied by the occluded vessel"
+      "Visualized complete occlusion, or a Tmax >4 s perfusion deficit supporting a cortical branch occlusion",
+      "Non-dominant or co-dominant M2 (serving <50% of the overall MCA territory), or M3",
+      "Presentation to the enrolling hospital within 24 h of last known well",
+      "Arterial puncture achievable within 2 h of the qualifying CTA/MRA or CTP/MRP",
+      "If onset >6 h: core <50% of the territory supplied by the occluded vessel — NCCT hypodensity with grey-white loss, ADC <620 mm²/s, or rCBF <30%"
     ],
-    excl: ["ich","aspects","tandem","multiterritory","icad","seizure","pregnant","terminal","platelets","midline"]
+    excl: [
+      "Presumed septic embolus; suspicion of bacterial endocarditis",
+      "Seizure at stroke onset or between onset and enrollment",
+      "Known anaphylactic reaction to contrast material that precludes endovascular reperfusion therapy",
+      "Intracranial occlusion suspected to be chronic, on history and/or imaging",
+      "Intracranial dissection, on history and/or imaging",
+      "Cerebral vasculitis, on history and/or imaging",
+      "Known pregnancy",
+      "Known pre-existing medical, neurological or psychiatric disease that would confound the neurological or functional evaluations",
+      "Known serious, advanced or terminal illness, or life expectancy under 6 months in the investigator's judgment",
+      "Known or high suspicion of underlying intracranial atherosclerotic disease (ICAD)",
+      "Known platelet count <100,000/µL",
+      "CT ASPECTS <6 (MRI ASPECTS <7)",
+      "Unfavorable vascular anatomy limiting access to the occluded artery",
+      "Acute occlusions in multiple vascular territories (bilateral anterior, or anterior/posterior)",
+      "Tandem occlusions",
+      "Significant mass effect with midline shift (>5 mm)",
+      "Evidence of intracranial tumor (except small meningioma: ≤3 cm and asymptomatic)",
+      "Evidence of acute intracranial hemorrhage"
+    ],
+    notes: "Protocol V5.0 states NIHSS >8 in two places, so the floor here is 9. The public registry record says ≥8 — worth confirming which your site screens to, because it decides every NIHSS 8 patient. V4.0 also dropped M4, ACA and PCA occlusions from this stratum."
   },
+
   RP_PIVOTAL: {
     id: "RP_PIVOTAL", name: "RP-PIVOTAL",
     full: "RapidPulse Cyclic Aspiration System pivotal study",
     nct: "NCT06029491", tone: "purple",
+    protocol: "CIP-0002 Rev 03 · 29 Jan 2026",
     sites: ["ICA","M1","M2_ND","VERT","BASILAR"], window: [0,8], nihss: [6,null], age: [18,80], mrs: [0,1],
     core: [
-      "Angiographic LVO: intracranial ICA, M1, M2, vertebral or basilar",
-      "Treatable within 8 h of onset / last known normal",
-      "Treatable within 120 min of the qualifying CT/MR",
-      "Candidate for frontline ADAPT (direct aspiration first pass)"
+      "Angiographic confirmation on DSA of an LVO with TICI 0–1 flow: intracranial ICA, M1 or M2, or vertebral or basilar",
+      "Arterial puncture within 8 h of symptom onset or last known normal",
+      "Arterial puncture within 120 min of the qualifying baseline CT/MR",
+      "Candidate for frontline ADAPT (direct aspiration first-pass technique)",
+      "Informed consent per IRB/EC and local regulation"
     ],
-    excl: ["ich","aspects","icad","tandem","terminal"],
-    notes: "Pre-morbid mRS must be 0–1 — tighter than the other trials on this list. The protocol permits M2, but this site no longer enrolls dominant M2 here; those go to ATHENA."
+    excl: [
+      "Presence of intracerebral hemorrhage",
+      "Significant mass effect and/or midline shift",
+      "ASPECTS <6, or PC-ASPECTS <7 on CTA source images or DWI-MRI for posterior circulation",
+      "Ischemic core >50 cc on CTP or >70 cc on DWI-MRI, where automated software is used",
+      "Evidence of intracranial tumor (except small meningioma)",
+      "Arterial stenosis proximal to the occlusion that could prevent thrombus removal or require stenting",
+      "Evidence of pre-existing arterial injury or dissection",
+      "Vessel tortuosity too difficult to allow endovascular access, per investigator judgment",
+      "Known or suspected ICAD",
+      "Evidence of multiple intracranial occlusions",
+      "Tandem occlusions",
+      "Recurrent stroke within the last 3 months",
+      "Uncontrolled hypertension — enrollable if BP can be reduced and held at an acceptable level on medication",
+      "Known hemorrhagic diathesis, coagulation deficiency, or oral anticoagulant with INR >3.0",
+      "Known platelet count <50,000/µL",
+      "Life expectancy under 6 months due to co-morbidities",
+      "Known pregnancy, or woman in labor",
+      "Known or suspected vasculitis",
+      "Current participation in an interventional drug or device study that may confound these results",
+      "Any other medical, behavioral or psychological condition that could limit participation or follow-up"
+    ],
+    notes: "Pre-morbid mRS must be 0–1 — tighter than every other trial here. The protocol permits M2 without specifying dominance, but this site no longer enrolls dominant M2 here; those go to ATHENA."
   },
+
   ATHENA: {
     id: "ATHENA", name: "ATHENA",
-    full: "Anaconda ANA Funnel Catheter with stent retriever",
+    full: "Anaconda ANA Funnel Catheter with a stent retriever",
     nct: "NCT06370182", tone: "blue",
-    sites: ["ICA","M1","M2_D"], window: [0,24], nihss: [6,25], age: [22,85], mrs: [0,2],
+    protocol: "CIP V2.3 · 25 Nov 2025",
+    sites: ["ICA","M1","M2_D"], window: [0,16], nihss: [6,25], age: [22,85], mrs: [0,2],
     core: [
-      "Occlusion (eTICI ≤1) of terminal ICA, M1, or dominant/proximal M2",
-      "Treatable within 24 h of last seen asymptomatic (puncture time)",
-      "Core ≤50 mL on CTP/MRP, or ASPECTS 6–10 (5 permitted at MRI-scoring centers)",
-      "Indicated for thrombectomy with an approved stent retriever"
+      "Occlusion with eTICI ≤1 flow of the terminal carotid, M1, or dominant or proximal M2, confirmed on angiography or CTA/MRA",
+      "A new focal disabling neurologic deficit consistent with acute cerebral ischemia",
+      "Arterial puncture within 16 h of the point the subject was last observed asymptomatic",
+      "Core ≤50 mL on CTP/MRP, or ASPECTS 6–10 on baseline CT/DWI-MRI (ASPECTS 5 permitted at centers scoring on MRI)",
+      "Indicated for thrombectomy with an approved stent retriever per its IFU",
+      "IV thrombolysis started without delay if indicated",
+      "Informed consent from the subject or an acceptable surrogate"
     ],
-    excl: ["ich","aspects","multiterritory","priorstroke","inr","stent"],
-    notes: "Window set to 24 h per your site. The public registry record lists 16 h — confirm the amendment your site is running under. Age floor is 22, not 18: the only trial here that excludes 18–21."
+    excl: [
+      "Stroke diagnosed in the past year",
+      "Clinical symptoms suggesting bilateral stroke or stroke in multiple territories",
+      "Known hemorrhagic diathesis, coagulation factor deficiency, antivitamin K anticoagulation with INR >3.0, or platelets <50,000/µL",
+      "Known baseline glucose <50 mg/dL or >400 mg/dL",
+      "Severe sustained uncontrolled hypertension refractory to treatment (SBP >185 or DBP >110 mmHg)",
+      "Serious, advanced or terminal disease with life expectancy under 1 year",
+      "Known cancer with metastases",
+      "History of life-threatening allergy (more than rash) to contrast medium",
+      "Known renal insufficiency with creatinine ≥3 mg/dL or GFR <30 mL/min",
+      "Current user, or recent history of use, of cocaine and/or heroin",
+      "Known pregnancy and/or lactating",
+      "Participating in a concurrent investigational drug or device study that would impact this study's primary endpoint",
+      "Unlikely to be available for 90-day follow-up (no fixed address, visitor from overseas)",
+      "CT or MRI evidence of hemorrhage — microbleeds are allowed",
+      "Significant mass effect with midline shift",
+      "Evidence of intracranial tumor (except asymptomatic meningioma ≤2 cm)",
+      "Suspicion of aortic dissection, presumed septic embolus, or suspicion of bacterial endocarditis",
+      "Pre-existing stent proximal to or at the occlusion site that may preclude safe deployment or recovery of the stent retriever",
+      "Vessel tortuosity too difficult to allow endovascular access of the intracranial ICA — carotid loops, type 3 arch"
+    ],
+    exclLate: [
+      "Initially treated with a different thrombectomy device during this procedure",
+      "eTICI improved to above 1 after initial screening and before intervention",
+      "Angiographic evidence of vasculitis",
+      "Tandem lesions — occlusion, high-grade stenosis or dissection of the extracranial or internal carotid requiring treatment or preventing access to thrombus",
+      "Known or suspected intracranial atherosclerotic lesion responsible for the target occlusion",
+      "Occlusions in multiple vascular territories",
+      "Inability to achieve arterial access",
+      "Anatomical or physiological restrictions preventing acceptable positioning of the guide and intermediate catheters, or deployment of the ANA, per its IFU"
+    ],
+    notes: "The signed V2.3 protocol decreased the inclusion window to 16 h — your old screening card said 24. Patients consented past 16 h are protocol deviations, so this is worth raising straight away. Age floor is 22, the only trial here that excludes 18–21."
   },
+
   TESTED: {
     id: "TESTED", name: "TESTED",
     full: "Treatment with Endovascular intervention for STroke patients with Existing Disability",
     nct: "NCT05911568", tone: "teal",
+    protocol: "Protocol v3.1 · 29 Jul 2026",
     sites: ["ICA","M1","M2_D"], window: [0,24], nihss: [6,null], age: [18,null], mrs: [3,4],
     core: [
-      "Pre-stroke mRS 3–4, sustained for at least 3 months before onset",
-      "Occlusion of intracranial ICA, M1 or dominant M2 on baseline CT or MR angiogram",
+      "Moderate-to-severe pre-stroke disability, mRS 3–4, sustained for at least 3 months before stroke onset",
+      "Diagnosis of acute ischemic stroke",
+      "Intracranial causative occlusion of the ICA, M1 or dominant M2 on the baseline CT or MR angiogram",
       "Presenting to the study hospital within 24 h of last known well",
       "CT ASPECTS ≥3, or MRI ASPECTS ≥4",
-      "NIHSS ≥6",
-      "Consent from the patient if competent, or from a legally authorized representative"
+      "Informed consent from the patient if competent, or from a legally authorized representative"
     ],
-    excl: ["t_terminal","t_unassessed","t_temporary","t_inpatient","aspects_lt3"],
-    notes: "The one trial here that requires pre-stroke disability. mRS 3–4 is an inclusion, not an exclusion — it takes the patients every other trial turns down, so it never competes with them for the same person. ASPECTS floor is ≥3, far more permissive than the ≥6 elsewhere."
+    excl: [
+      "Known diagnosis of terminal cancer or terminal illness at the time of stroke",
+      "Assessment of pre-stroke functional status could not be performed during the hospital stay",
+      "Pre-stroke disability deemed temporary in the investigator's opinion — for example recovering from a recent illness or traumatic injury",
+      "Stroke onset during an acute inpatient hospital stay",
+      "Presence of acute intracerebral hemorrhage at initial presentation"
+    ],
+    notes: "Observational, 1060 patients — enrollment doesn't change the treatment decision, and it captures both EVT and medical-management patients. Sites are encouraged to enroll within 72 h of presentation but may enroll up to 5 days from admission, so a missed acute screen isn't a lost patient. The ASPECTS floor of 3 is far more permissive than the ≥6 elsewhere, and mRS 3–4 is an inclusion, so TESTED takes exactly the patients the other trials turn down."
   }
 };
 
@@ -360,31 +479,44 @@ const POST_CASE = {
   id: "SUMMIT_RISE", name: "SUMMIT RISE",
   full: "SUMMIT RISE — Route 92 Medical Reperfusion System registry",
   nct: "NCT07436156",
+  protocol: "CIP 4262.E · September 2026",
   age: [18, null],
   punctureWindow: 8,
+  sites: ["ICA","M1","M2_D","M2_ND","VERT","BASILAR"],
   core: [
-    "Route 92 Medical Reperfusion System used on the first attempted pass",
-    "Endovascular treatment initiated (groin puncture) within 8 h of last known well",
+    "Treated on-label for the indicated vessels below, with the physician having chosen a Route 92 product for the first attempted pass",
     "Age ≥18",
-    "Consent documented within 72 h following the thrombectomy procedure"
+    "Endovascular treatment initiated — access site puncture — within 8 h of last known well",
+    "Consent allowing data collection documented within 72 h of the thrombectomy procedure"
   ],
-  notes: "Registry lists no exclusion criteria. No NIHSS, mRS, ASPECTS or vessel requirement. A patient randomized into RP-PIVOTAL or ATHENA gets that trial's device on the first pass, so they can't also be a SUMMIT RISE case.",
-  todo: "Point 1 of your criteria refers to a device table — confirm which Route 92 products qualify and add them here."
+  devices: [
+    { sys: "HiPoint 88",   guide: "Base Camp (mandatory)",     vessels: "ICA, M1" },
+    { sys: "FreeClimb 70", guide: "Base Camp or operator choice", vessels: "ICA, M1, M2, basilar, vertebral" },
+    { sys: "FreeClimb 54", guide: "Base Camp or operator choice", vessels: "ICA, M1, M2, basilar, vertebral" }
+  ],
+  deviceNotes: [
+    "HiPoint 70 is indicated for ICA and M1 only, and may run only through the HiPoint 88 — never through a 6F sheath",
+    "FreeClimb 88 is not included in SUMMIT RISE",
+    "Non-Route 92 aspiration catheters and stent retrievers may be used after at least one pass with an eligible Route 92 device; the Route 92 system comes out first, though Base Camp may stay",
+    "An operator who has not used a Route 92 system before must do their first case with the FreeClimb 70 or FreeClimb 54",
+    "Each site may contribute up to 20% of enrollment in each arm"
+  ],
+  notes: "The protocol lists no exclusion criteria at all — no NIHSS, mRS or ASPECTS requirement. A patient enrolled in RP-PIVOTAL or ATHENA gets that trial's device on the first pass, so they can't also be a SUMMIT RISE case. M3 is not an indicated vessel for any Route 92 system."
 };
 
 const SOURCES = {
-  STEP_A: [
+  STEP_LVO: [
     { label: "StrokeNet Domain A synopsis", url: "https://www.nihstrokenet.org/trials/step-trial/domain-a-synopsis" },
     { label: "Registry record", url: "https://clinicaltrials.gov/study/NCT06289985" }
   ],
-  STEP_B: [
+  STEP_MEVO: [
     { label: "StrokeNet Domain A synopsis", url: "https://www.nihstrokenet.org/trials/step-trial/domain-a-synopsis" },
     { label: "Registry record", url: "https://clinicaltrials.gov/study/NCT06289985" }
   ],
   RP_PIVOTAL:  [{ label: "Registry record", url: "https://clinicaltrials.gov/study/NCT06029491" }],
   ATHENA:      [{ label: "Registry record", url: "https://clinicaltrials.gov/study/NCT06370182" }],
-  SUMMIT_RISE: [{ label: "Registry record", url: "https://clinicaltrials.gov/study/NCT07436156" }],
-  TESTED:      [{ label: "Registry record", url: "https://clinicaltrials.gov/study/NCT05911568" }]
+  TESTED:      [{ label: "Registry record", url: "https://clinicaltrials.gov/study/NCT05911568" }],
+  SUMMIT_RISE: [{ label: "Registry record", url: "https://clinicaltrials.gov/study/NCT07436156" }]
 };
 
 const SITES = [
@@ -397,31 +529,6 @@ const SITES = [
   { id: "BASILAR", label: "Basilar" }
 ];
 const SITE_LABEL = Object.fromEntries(SITES.map(s => [s.id, s.label]));
-
-const FLAG_LABEL = {
-  ich:            "Any intracranial hemorrhage on baseline imaging",
-  aspects:        "ASPECTS <6 on CT (<7 on MRI)",
-  aspects_lt3:    "ASPECTS <3 on CT (<4 on MRI)",
-  core50:         "Core >50 mL or >1/3 of the occluded territory",
-  tandem:         "Tandem occlusion",
-  multiterritory: "Occlusion or symptomatic stroke in a second territory",
-  icad:           "Known or suspected ICAD at the target",
-  seizure:        "Seizure at stroke onset",
-  pregnant:       "Known pregnancy",
-  terminal:       "Life expectancy under 6 months",
-  platelets:      "Platelets <100,000/µL",
-  inr:            "On a vitamin K antagonist with INR >3.0",
-  midline:        "Midline shift >5 mm",
-  priorstroke:    "Ischemic stroke within the past year",
-  stent:          "Pre-existing stent at or proximal to the occlusion",
-  improving:      "Rapidly improving, likely NIHSS <5 at randomization",
-  othertier:      "Significant ischemia in a non-target territory",
-  contrast:       "Contraindication to contrast CT or MR",
-  t_terminal:     "Terminal cancer or terminal illness at the time of stroke",
-  t_unassessed:   "Pre-stroke functional status could not be assessed during the hospital stay",
-  t_temporary:    "Pre-stroke disability judged temporary (recovering from recent illness or injury)",
-  t_inpatient:    "Stroke onset during an acute inpatient hospital stay"
-};
 
 const TONE = {
   red:    { bar: "#e11d48", chipInk: "#fff",    text: "#be123c" },
@@ -449,18 +556,18 @@ function centerRoute({ site, hours: h, nihss: n, mrs }) {
 
   if (site === "ICA" || site === "M1") {
     if (h < 8) {
-      if (n <= 5) push("STEP_A", "ICA/M1 under 8 h with NIHSS 0–5");
+      if (n <= 5) push("STEP_LVO", "ICA/M1 under 8 h with NIHSS 0–5");
       if (n >= 6) push("RP_PIVOTAL", "ICA/M1 under 8 h with NIHSS ≥6");
     } else if (h < 24) {
-      if (n <= 5) push("STEP_A", "ICA/M1 in the 8–24 h window with NIHSS 0–5");
-      if (n >= 6 && n <= 25) push("ATHENA", "ICA/M1 at 8–24 h with NIHSS 6–25");
+      if (n <= 5) push("STEP_LVO", "ICA/M1 in the 8–24 h window with NIHSS 0–5");
+      if (h <= 16 && n >= 6 && n <= 25) push("ATHENA", "ICA/M1 at 8–16 h with NIHSS 6–25");
     }
   }
-  if (site === "M2_D" && h < 24 && n >= 6 && n <= 25) {
-    push("ATHENA", "Dominant M2 within 24 h with NIHSS 6–25");
+  if (site === "M2_D" && h <= 16 && n >= 6 && n <= 25) {
+    push("ATHENA", "Dominant M2 within 16 h with NIHSS 6–25");
   }
-  if ((site === "M2_ND" || site === "M3") && h < 24 && n >= 8) {
-    push("STEP_B", "Distal MCA within 24 h with NIHSS ≥8");
+  if ((site === "M2_ND" || site === "M3") && h < 24 && n >= 9) {
+    push("STEP_MEVO", "Distal MCA within 24 h with NIHSS >8");
   }
   if (site === "VERT" && h < 8 && n >= 6) push("RP_PIVOTAL", "Vertebral under 8 h with NIHSS ≥6");
   if (site === "BASILAR" && h < 8 && n >= 6) push("RP_PIVOTAL", "Basilar under 8 h with NIHSS ≥6");
@@ -469,11 +576,22 @@ function centerRoute({ site, hours: h, nihss: n, mrs }) {
 }
 
 /* ============================================================================
-   SCREEN — site, clock, NIHSS and exclusions are hard. Age and mRS warn only.
+   SCREEN — every criterion here is a hard stop: vessel, clock, NIHSS, age,
+   pre-stroke mRS, and any exclusion ticked in step 4.
    ========================================================================== */
 
+/* Exclusions are per-trial now, so the same wording can differ between
+   protocols (platelets <100,000 for STEP, <50,000 for ATHENA and RP-PIVOTAL).
+   A ticked box is keyed to its own trial: "<trialId>|x3" or "<trialId>|l1". */
+function exclKeys(t) {
+  const out = [];
+  (t.excl || []).forEach((text, i) => out.push({ key: t.id + "|x" + i, text, late: false }));
+  (t.exclLate || []).forEach((text, i) => out.push({ key: t.id + "|l" + i, text, late: true }));
+  return out;
+}
+
 function screenTrial(t, p) {
-  const hard = [], soft = [];
+  const hard = [];
 
   if (!t.sites.includes(p.site)) hard.push(SITE_LABEL[p.site] + " is not a target vessel");
 
@@ -488,23 +606,24 @@ function screenTrial(t, p) {
   }
   if (p.age !== "") {
     const a = Number(p.age);
-    if (t.age[0] !== null && a < t.age[0]) soft.push("Age " + a + " is under the trial minimum of " + t.age[0]);
-    if (t.age[1] !== null && a > t.age[1]) soft.push("Age " + a + " is over the trial maximum of " + t.age[1]);
+    if (t.age[0] !== null && a < t.age[0]) hard.push("Age " + a + " is under the minimum of " + t.age[0]);
+    if (t.age[1] !== null && a > t.age[1]) hard.push("Age " + a + " is over the maximum of " + t.age[1]);
   }
   if (p.mrs !== "") {
     const m = Number(p.mrs);
-    if (m < t.mrs[0]) soft.push("Pre-stroke mRS " + m + " is below the trial range of " + t.mrs[0] + "–" + t.mrs[1]);
-    if (m > t.mrs[1]) soft.push("Pre-stroke mRS " + m + " is over the trial limit of " + t.mrs[1]);
+    const r = t.mrs[0] === 0 ? "0–" + t.mrs[1] : t.mrs[0] + "–" + t.mrs[1];
+    if (m < t.mrs[0]) hard.push("Pre-stroke mRS " + m + " is below the range of " + r);
+    if (m > t.mrs[1]) hard.push("Pre-stroke mRS " + m + " is above the range of " + r);
   }
 
-  t.excl.filter(f => p.flags[f]).forEach(f => hard.push(FLAG_LABEL[f]));
+  exclKeys(t).filter(e => p.flags[e.key]).forEach(e => hard.push(e.text));
 
   let status;
   if (hard.length) status = "out";
   else if (p.site && p.hours !== "" && p.nihss !== "") status = "in";
   else status = "pending";
 
-  return { status, hard, soft };
+  return { status, hard, soft: [] };
 }
 
 /* ----------------------------------------------------------------------------
@@ -621,15 +740,18 @@ function render() {
   }
 
   c += live.map((r, i) => {
-    const t = TRIALS[r.id], tone = TONE[t.tone], res = byId[r.id];
+    const t = TRIALS[r.id], tone = TONE[t.tone];
     const open = !!state.openEx[t.id];
-    const n = t.excl.length;
+    const keys = exclKeys(t);
+    const nEx = keys.length;
+    const ticked = keys.filter(e => state.flags[e.key]).length;
 
-    const soft = res.soft.length ? `<div class="softbox">${res.soft.map(s => `<p>${esc(s)}</p>`).join("")}</div>` : "";
+    const row = e => `<label><input type="checkbox" data-flag="${e.key}"${state.flags[e.key] ? " checked" : ""}><span>${esc(e.text)}</span></label>`;
+    const early = keys.filter(e => !e.late), late = keys.filter(e => e.late);
     const list = open
-      ? `<div class="exlist">${t.excl.map(f =>
-          `<label><input type="checkbox" data-flag="${f}"${state.flags[f] ? " checked" : ""}><span>${esc(FLAG_LABEL[f])}</span></label>`
-        ).join("")}</div>`
+      ? `<div class="exlist">${early.map(row).join("")}${
+          late.length ? `<p class="sep">ASSESSED IN THE ANGIO SUITE</p>${late.map(row).join("")}` : ``
+        }</div>`
       : "";
 
     /* inclusion band */
@@ -656,7 +778,6 @@ function render() {
         <span class="chip" style="background:${tone.bar};color:${tone.chipInk}">${t.name}</span>
         ${i===0 && live.length>1 ? `<span class="tag">closest fit</span>` : ``}
         <p class="why">${esc(r.why)}</p>
-        ${soft}
         <div class="exbar inbar">
           <button class="exhead" data-in="${t.id}" aria-expanded="${inOpen}">
             <span class="lead"><span class="n">3</span><span class="t">Inclusion criteria</span></span>
@@ -664,13 +785,13 @@ function render() {
           </button>
           ${incList}
         </div>
-        <div class="exbar">
+        <div class="exbar exlast">
           <button class="exhead" data-ex="${t.id}" aria-expanded="${open}">
             <span class="lead"><span class="n">4</span><span class="t">Exclusions</span></span>
-            <span class="right"><span class="s">${n} to check</span><span class="chev"></span></span>
+            <span class="right"><span class="s">${ticked ? ticked + " of " + nEx + " ticked" : nEx + " to check"}</span><span class="chev"></span></span>
           </button>
           ${list}
-          ${open ? `<p class="cleared">Nothing ticked — clears all ${n}.</p>` : ``}
+          ${open && !ticked ? `<p class="cleared">Nothing ticked — clears all ${nEx}.</p>` : ``}
         </div>
       </div></div>`;
   }).join("");
@@ -685,10 +806,11 @@ function render() {
   /* ---------- AFTER THE CASE ---------- */
   const P = POST_CASE;
   let pOut = null;
-  if (state.age !== "" && Number(state.age) < P.age[0]) pOut = "age " + state.age + " is under 18";
+  if (state.site && !P.sites.includes(state.site)) pOut = SITE_LABEL[state.site] + " is not an indicated vessel for any Route 92 system";
+  else if (state.age !== "" && Number(state.age) < P.age[0]) pOut = "age " + state.age + " is under 18";
   else if (state.hours !== "" && Number(state.hours) >= P.punctureWindow) pOut = "already " + state.hours + " h from last known well, so puncture can't fall inside 8 h";
 
-  const met = !pOut && state.hours !== "" && Number(state.hours) < P.punctureWindow;
+  const met = !pOut && state.site && state.hours !== "" && Number(state.hours) < P.punctureWindow;
   const pOpen = !!state.openEx[P.id];
 
   $("postPanel").innerHTML = `<div class="post${met ? " met" : ""}">
@@ -702,10 +824,16 @@ function render() {
         ? "If a Route 92 system went in on the first pass, this is an enrollment. 72 h from the procedure to consent."
         : pOut
           ? "Not a candidate — " + esc(pOut) + "."
-          : "Depends on the device used on the first pass. Enter time from last known well to check the 8 h puncture window."}</p>
+          : "Depends on the device used on the first pass. Enter site and time from last known well to check."}</p>
       <button class="pmore" data-ex="${P.id}">${pOpen ? "hide criteria" : "criteria"}</button>
-      ${pOpen ? `<ul>${P.core.map(x => `<li><span class="b">·</span>${esc(x)}</li>`).join("")}</ul>
-        <ul><li><span class="b">·</span>${esc(P.notes)}</li><li><span class="b">·</span>${esc(P.todo)}</li></ul>
+      ${pOpen ? `${P.protocol ? `<p class="lbl" style="margin:10px 0 0;font-weight:600;color:var(--muted)">${esc(P.protocol)}</p>` : ``}
+        <ul>${P.core.map(x => `<li><span class="b">·</span>${esc(x)}</li>`).join("")}</ul>
+        <table class="dtable">
+          <thead><tr><th>Route 92 system</th><th>Guide</th><th>Indicated vessels</th></tr></thead>
+          <tbody>${P.devices.map(d => `<tr><td>${esc(d.sys)}</td><td>${esc(d.guide)}</td><td>${esc(d.vessels)}</td></tr>`).join("")}</tbody>
+        </table>
+        <ul>${P.deviceNotes.map(x => `<li><span class="b">·</span>${esc(x)}</li>`).join("")}</ul>
+        <ul><li><span class="b">·</span>${esc(P.notes)}</li></ul>
         <div class="srcs">${(SOURCES[P.id]||[]).map(x => `<a href="${x.url}" target="_blank" rel="noopener noreferrer">${esc(x.label)}</a>`).join("")}</div>` : ``}
     </div></div>`;
 
@@ -715,7 +843,7 @@ function render() {
     <div class="step" style="margin-bottom:0"><h2>Protocol screen</h2></div>
     <p style="font-size:13px;color:var(--muted);margin:2px 0 0">All trials, regardless of what the card says. Tap one for its criteria.</p></div>`;
 
-  s += results.map(({ trial: t, status, hard, soft }) => {
+  s += results.map(({ trial: t, status, hard }) => {
     const tone = TONE[t.tone], open = state.open === t.id;
     const line = status === "in" ? "Clears site, clock, NIHSS and every exclusion ticked."
                : status === "pending" ? "Nothing rules it out yet."
@@ -732,6 +860,7 @@ function render() {
       const src = SOURCES[t.id] || [];
       d = `<div class="detail">
         <p class="full">${esc(t.full)}</p>
+        ${t.protocol ? `<p class="lbl2" style="margin:-6px 0 12px">${esc(t.protocol)}</p>` : ``}
         <dl class="facts">${facts.map(([k,v]) => `<div class="fact"><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>
         <p class="lbl2">Vessels</p>
         <p class="val">${t.sites.map(x => esc(SITE_LABEL[x])).join(" · ")}</p>
@@ -753,7 +882,6 @@ function render() {
           ${routedIds.has(t.id) ? `<span class="tag">on the card</span>` : ``}
           <span class="trial-meta">${esc(t.nct)}</span>
           <p class="trial-line ${status==="out"?"out":""}">${line}</p>
-          ${soft.length && status!=="out" ? `<p class="trial-line warn">${esc(soft[0])}${soft.length>1?` · +${soft.length-1} more`:``}</p>` : ``}
         </span>
       </button>${d}</div>`;
   }).join("");
