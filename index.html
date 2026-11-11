@@ -84,6 +84,10 @@
   .tbody { padding: 14px 16px; flex: 1; min-width: 0; }
   .chip { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 700; }
   .why { font-size: 13.5px; color: var(--ink-3); margin: 6px 0 0; line-height: 1.35; }
+  .dbadge { display: inline-block; vertical-align: 2px; margin-left: 8px; padding: 1px 7px; border-radius: 4px; border: 1px solid; font-size: 11px; font-weight: 700; letter-spacing: .02em; line-height: 1.5; }
+  .d-rct    { color: #b91c1c; background: #fef2f2; border-color: #fca5a5; }
+  .d-single { color: #15803d; background: #f0fdf4; border-color: #86efac; }
+  .trial-row .dbadge.muted { opacity: .55; }
   .tag { font-size: 11px; color: var(--muted); font-weight: 500; margin-left: 8px; }
 
   .softbox { margin-top: 10px; background: var(--warn-bg); border: 1px solid var(--warn-line); border-radius: 4px; padding: 8px 10px; }
@@ -276,7 +280,7 @@
         version it came from. Protocols get amended — reconcile against the current IRB-approved version before using
         this on a real screen. This narrows the list; it doesn't replace the eligibility checklist or the PI's call.
       </p>
-      <p class="ver">Version 2.3 · November 2026</p>
+      <p class="ver">Version 2.5 · November 2026</p>
     </section>
 
   </div>
@@ -290,7 +294,7 @@
 
 const TRIALS = {
   STEP_LVO: {
-    id: "STEP_LVO", name: "STEP-LVO",
+    id: "STEP_LVO", name: "STEP-LVO", design: "rct",
     full: "StrokeNet Thrombectomy Endovascular Platform — Domain A, low-NIHSS LVO stratum",
     nct: "NCT06289985", tone: "red",
     protocol: "Domain A Protocol V5.0 · 18 Sep 2025",
@@ -320,12 +324,11 @@ const TRIALS = {
       "Significant mass effect with midline shift (>5 mm)",
       "Evidence of intracranial tumor (except small meningioma: ≤3 cm and asymptomatic)",
       "Evidence of acute intracranial hemorrhage"
-    ],
-    notes: "Baseline imaging only needs repeating if the NIHSS improves significantly before randomization — the exception to the 120-minute rule that applies to the rest of the domain."
+    ]
   },
 
   STEP_MEVO: {
-    id: "STEP_MEVO", name: "STEP-MeVO",
+    id: "STEP_MEVO", name: "STEP-MeVO", design: "rct",
     full: "StrokeNet Thrombectomy Endovascular Platform — Domain A, medium/distal vessel stratum",
     nct: "NCT06289985", tone: "red",
     protocol: "Domain A Protocol V5.0 · 18 Sep 2025",
@@ -356,12 +359,11 @@ const TRIALS = {
       "Significant mass effect with midline shift (>5 mm)",
       "Evidence of intracranial tumor (except small meningioma: ≤3 cm and asymptomatic)",
       "Evidence of acute intracranial hemorrhage"
-    ],
-    notes: "Floor is 9 — NIHSS must be greater than 8, confirmed with the PI on 2 Nov 2026 and matching Protocol V5.0. An NIHSS of exactly 8 does not qualify, whatever the registry record says. V4.0 also dropped M4, ACA and PCA occlusions from this stratum."
+    ]
   },
 
   RP_PIVOTAL: {
-    id: "RP_PIVOTAL", name: "RP-PIVOTAL",
+    id: "RP_PIVOTAL", name: "RP-PIVOTAL", design: "single",
     full: "RapidPulse Cyclic Aspiration System pivotal study",
     nct: "NCT06029491", tone: "purple",
     protocol: "CIP-0002 Rev 03 · 29 Jan 2026",
@@ -394,12 +396,11 @@ const TRIALS = {
       "Known or suspected vasculitis",
       "Current participation in an interventional drug or device study that may confound these results",
       "Any other medical, behavioral or psychological condition that could limit participation or follow-up"
-    ],
-    notes: "Pre-morbid mRS must be 0–1 — tighter than every other trial here. The protocol permits M2 without specifying dominance, but this site no longer enrolls dominant M2 here; those go to ATHENA."
+    ]
   },
 
   ATHENA: {
-    id: "ATHENA", name: "ATHENA",
+    id: "ATHENA", name: "ATHENA", design: "rct",
     full: "Anaconda ANA Funnel Catheter with a stent retriever",
     nct: "NCT06370182", tone: "blue",
     protocol: "CIP V2.3 · 25 Nov 2025",
@@ -443,8 +444,7 @@ const TRIALS = {
       "Occlusions in multiple vascular territories",
       "Inability to achieve arterial access",
       "Anatomical or physiological restrictions preventing acceptable positioning of the guide and intermediate catheters, or deployment of the ANA, per its IFU"
-    ],
-    notes: "Window is 16 h, confirmed with the PI on 2 Nov 2026 and matching signed protocol V2.3. The old screening card said 24 — anyone consented between 16 and 24 h is a protocol deviation. Age floor is 22, the only trial here that excludes 18–21."
+    ]
   },
 
   TESTED: {
@@ -467,8 +467,7 @@ const TRIALS = {
       "Pre-stroke disability deemed temporary in the investigator's opinion — for example recovering from a recent illness or traumatic injury",
       "Stroke onset during an acute inpatient hospital stay",
       "Presence of acute intracerebral hemorrhage at initial presentation"
-    ],
-    notes: "Observational, 1060 patients — enrollment doesn't change the treatment decision, and it captures both EVT and medical-management patients. Sites are encouraged to enroll within 72 h of presentation but may enroll up to 5 days from admission, so a missed acute screen isn't a lost patient. The ASPECTS floor of 3 is far more permissive than the ≥6 elsewhere, and mRS 3–4 is an inclusion, so TESTED takes exactly the patients the other trials turn down."
+    ]
   }
 };
 
@@ -500,8 +499,7 @@ const POST_CASE = {
     "Non-Route 92 aspiration catheters and stent retrievers may be used after at least one pass with an eligible Route 92 device; the Route 92 system comes out first, though Base Camp may stay",
     "An operator who has not used a Route 92 system before must do their first case with the FreeClimb 70 or FreeClimb 54",
     "Each site may contribute up to 20% of enrollment in each arm"
-  ],
-  notes: "The protocol lists no exclusion criteria at all — no NIHSS, mRS or ASPECTS requirement. A patient enrolled in RP-PIVOTAL or ATHENA gets that trial's device on the first pass, so they can't also be a SUMMIT RISE case. M3 is not an indicated vessel for any Route 92 system."
+  ]
 };
 
 const SOURCES = {
@@ -529,6 +527,13 @@ const SITES = [
   { id: "BASILAR", label: "Basilar" }
 ];
 const SITE_LABEL = Object.fromEntries(SITES.map(s => [s.id, s.label]));
+
+/* Study design badge. "rct" means the coordinator has to randomize. */
+const DESIGN = {
+  rct:      { label: "RCT",              cls: "d-rct" },
+  single:   { label: "Single-arm study", cls: "d-single" }
+};
+const designBadge = d => DESIGN[d] ? `<span class="dbadge ${DESIGN[d].cls}">${DESIGN[d].label}</span>` : "";
 
 const TONE = {
   red:    { bar: "#e11d48", chipInk: "#fff",    text: "#be123c" },
@@ -775,7 +780,7 @@ function render() {
 
     return `<div class="tblock"><div class="tbar" style="background:${tone.bar}"></div>
       <div class="tbody">
-        <span class="chip" style="background:${tone.bar};color:${tone.chipInk}">${t.name}</span>
+        <span class="chip" style="background:${tone.bar};color:${tone.chipInk}">${t.name}</span>${designBadge(t.design)}
         ${i===0 && live.length>1 ? `<span class="tag">closest fit</span>` : ``}
         <p class="why">${esc(r.why)}</p>
         <div class="exbar inbar">
@@ -833,7 +838,6 @@ function render() {
           <tbody>${P.devices.map(d => `<tr><td>${esc(d.sys)}</td><td>${esc(d.guide)}</td><td>${esc(d.vessels)}</td></tr>`).join("")}</tbody>
         </table>
         <ul>${P.deviceNotes.map(x => `<li><span class="b">·</span>${esc(x)}</li>`).join("")}</ul>
-        <ul><li><span class="b">·</span>${esc(P.notes)}</li></ul>
         <div class="srcs">${(SOURCES[P.id]||[]).map(x => `<a href="${x.url}" target="_blank" rel="noopener noreferrer">${esc(x.label)}</a>`).join("")}</div>` : ``}
     </div></div>`;
 
@@ -867,7 +871,6 @@ function render() {
         <p class="lbl2">Also required</p>
         <ul>${t.core.map(x => `<li><span class="b">·</span>${esc(x)}</li>`).join("")}</ul>
         ${hard.length ? `<p class="lbl2">Blocking right now</p><ul>${hard.map(x => `<li class="block"><span>·</span>${esc(x)}</li>`).join("")}</ul>` : ``}
-        ${t.notes ? `<p class="note">${esc(t.notes)}</p>` : ``}
         <div class="srcs">${src.length
           ? src.map(x => `<a href="${x.url}" target="_blank" rel="noopener noreferrer">${esc(x.label)}</a>`).join("")
           : `<span class="none">No source link yet — add your protocol URL to the SOURCES block.</span>`}</div>
@@ -878,7 +881,7 @@ function render() {
       <button class="trial-btn" data-trial="${t.id}" aria-expanded="${open}">
         <span class="dot ${status}"></span>
         <span style="flex:1;min-width:0">
-          <span class="trial-name ${status==="out"?"out":""}" style="${status==="out"?"":"color:"+tone.text}">${t.name}</span>
+          <span class="trial-name ${status==="out"?"out":""}" style="${status==="out"?"":"color:"+tone.text}">${t.name}</span>${designBadge(t.design).replace('class="dbadge', status==="out" ? 'class="dbadge muted' : 'class="dbadge')}
           ${routedIds.has(t.id) ? `<span class="tag">on the card</span>` : ``}
           <span class="trial-meta">${esc(t.nct)}</span>
           <p class="trial-line ${status==="out"?"out":""}">${line}</p>
